@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust toolchain (from rust-toolchain.toml)
+        run: rustup show active-toolchain || rustup toolchain install
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Rust format and lints
+        run: |
+          cargo fmt --check
+          cargo clippy --release --all-targets -- -D warnings
+
+      - name: Rust tests
+        run: cargo test --release
+
+      - name: Build WASM
+        run: ./scripts/build-wasm.sh
+
+      - name: Determinism (native vs WASM checksums)
+        run: ./scripts/check-determinism.sh
+
+      - name: Client typecheck and build
+        working-directory: client
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: client/dist
+          retention-days: 14
+
+  # Publishes every branch to Cloudflare Pages once the two secrets exist
+  # (see README, "Хостинг"). Without them the job just leaves a notice.
+  deploy:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Skip without Cloudflare secrets
+        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
+        run: echo "::notice::Деплой пропущен - не заданы секреты CLOUDFLARE_API_TOKEN и CLOUDFLARE_ACCOUNT_ID."
+
+      - uses: actions/download-artifact@v4
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        with:
+          name: site
+          path: site
+
+      - name: Deploy to Cloudflare Pages
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        run: |
+          npx --yes wrangler@4 pages project create vladcity --production-branch main || true
+          npx --yes wrangler@4 pages deploy site --project-name vladcity --branch "${GITHUB_REF_NAME}"

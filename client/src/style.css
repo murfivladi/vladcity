@@ -1,0 +1,288 @@
+:root {
+  --bg: #f4f2ee;
+  --card: #ffffff;
+  --text: #1f2328;
+  --muted: #61666d;
+  --line: #e2dfd8;
+  --accent: #2f6fde;
+  --accent-text: #ffffff;
+  --ok: #1d8a4c;
+  --bad: #c2362f;
+  --warn: #b46b00;
+  --code: #f1efe9;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15171a;
+    --card: #1e2125;
+    --text: #e8e6e3;
+    --muted: #9aa0a6;
+    --line: #30343a;
+    --accent: #5b8ff0;
+    --accent-text: #0d1117;
+    --ok: #4cc27f;
+    --bad: #f0716a;
+    --warn: #e0a346;
+    --code: #16181b;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 30px;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.subtitle,
+.hint {
+  color: var(--muted);
+  margin: 4px 0 12px;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+}
+
+input,
+select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.options label {
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+button {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+button.ghost {
+  background: transparent;
+}
+
+.tests {
+  display: grid;
+  gap: 10px;
+}
+
+.tests button {
+  display: grid;
+  text-align: left;
+  gap: 2px;
+  padding: 14px 16px;
+}
+
+.tests span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.tests em {
+  font-style: normal;
+  font-size: 14px;
+  color: var(--ok);
+}
+
+.tests em.bad {
+  color: var(--bad);
+}
+
+.checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.checks li::before {
+  display: inline-block;
+  width: 1.4em;
+  font-weight: 700;
+}
+
+.checks li.ok::before {
+  content: '✓';
+  color: var(--ok);
+}
+
+.checks li.bad::before {
+  content: '✗';
+  color: var(--bad);
+}
+
+.checks li.warn::before {
+  content: '!';
+  color: var(--warn);
+}
+
+.checks small {
+  color: var(--muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+pre {
+  margin: 0;
+  padding: 12px;
+  background: var(--code);
+  border-radius: 10px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 10;
+}
+
+#stage[hidden],
+#busy[hidden] {
+  display: none;
+}
+
+#viewport {
+  position: absolute;
+  inset: 0;
+}
+
+#viewport canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.hud {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: calc(12px + env(safe-area-inset-top));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 0 1px 3px #000;
+}
+
+.hud button {
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+#busy {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  z-index: 20;
+  padding: 16px;
+}
+
+.busy-box {
+  text-align: center;
+  max-width: 420px;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 12px;
+  border: 4px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 520px) {
+  .options {
+    grid-template-columns: 1fr;
+  }
+}

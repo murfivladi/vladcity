@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <title>VladCity — бенчмарк</title>
+  </head>
+  <body>
+    <main id="app">
+      <header>
+        <h1>VladCity</h1>
+        <p class="subtitle">Фаза 1 · технические пробы. Проверяем, потянет ли браузер мегаполис.</p>
+      </header>
+
+      <section class="card">
+        <label for="device">Как назвать это устройство?</label>
+        <input id="device" type="text" autocomplete="off" placeholder="Например: ноутбук Lenovo, iPhone 13" />
+      </section>
+
+      <section class="card">
+        <h2>Окружение</h2>
+        <ul id="env" class="checks"><li>Проверяем…</li></ul>
+      </section>
+
+      <section class="card">
+        <h2>Тесты</h2>
+        <p class="hint">Запускайте по порядку, подключив зарядку и закрыв другие вкладки. Результаты сохраняются, страницу можно перезагружать.</p>
+        <div class="options">
+          <label>Движок рендера
+            <select id="engine">
+              <option value="auto">Авто (WebGPU, если есть)</option>
+              <option value="webgpu">Только WebGPU</option>
+              <option value="webgl2">Только WebGL2</option>
+            </select>
+          </label>
+          <label>Жителей в живом тесте
+            <select id="live-n">
+              <option value="100000">100 000</option>
+              <option value="500000">500 000</option>
+              <option value="1000000">1 000 000</option>
+            </select>
+          </label>
+        </div>
+        <div class="tests">
+          <button data-test="sim"><b>1. Симуляция</b><span>≈ 1 мин · агенты в WASM-воркерах</span><em data-status="sim"></em></button>
+          <button data-test="render"><b>2. Рендер</b><span>≈ 1 мин · 100 000 машин и 50 000 зданий</span><em data-status="render"></em></button>
+          <button data-test="live"><b>3. Живой тест</b><span>≈ 20 с · воркер → общая память → рендер</span><em data-status="live"></em></button>
+          <button data-test="memory"><b>4. Память</b><span>≈ 1 мин · вкладка может перезагрузиться, это нормально</span><em data-status="memory"></em></button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Результаты</h2>
+        <div class="actions">
+          <button id="send" class="primary">Отправить в GitHub</button>
+          <button id="copy">Скопировать</button>
+          <button id="download">Скачать JSON</button>
+          <button id="reset" class="ghost">Сбросить</button>
+        </div>
+        <p id="action-note" class="hint" role="status"></p>
+        <pre id="report"></pre>
+      </section>
+    </main>
+
+    <div id="stage" hidden>
+      <div id="viewport"></div>
+      <div class="hud">
+        <span id="stage-text"></span>
+        <button id="stop">Стоп</button>
+      </div>
+    </div>
+
+    <div id="busy" hidden>
+      <div class="busy-box">
+        <div class="spinner"></div>
+        <p id="busy-text"></p>
+      </div>
+    </div>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+# Rust
+/target/
+
+# Client
+client/node_modules/
+client/dist/
+# Built by scripts/build-wasm.sh
+client/src/generated/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.log

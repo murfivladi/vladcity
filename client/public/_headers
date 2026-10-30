@@ -1,0 +1,5 @@
+# Cross-origin isolation, required for SharedArrayBuffer (Cloudflare Pages / Netlify).
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin

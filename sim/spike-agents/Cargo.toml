@@ -1,0 +1,13 @@
+[package]
+name = "spike-agents"
+version = "0.1.0"
+description = "Phase 1 spike: per-tick cost of simple citizen agents and IDM car-following, native and WASM"
+edition.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "native_bench"
+path = "src/bin/native_bench.rs"
