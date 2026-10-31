@@ -62,6 +62,15 @@ function renderEnv(env: EnvInfo | null): void {
   }
   const items: [string, 'ok' | 'bad' | 'warn', string][] = [];
   items.push(['Общая память (COOP/COEP)', env.crossOriginIsolated ? 'ok' : 'bad', env.crossOriginIsolated ? 'работает' : 'хостинг не отдаёт заголовки']);
+  if (env.headersPage === false || env.headersScript === false) {
+    items.push([
+      'Заголовки сервера',
+      'bad',
+      env.headersPage === false
+        ? 'страница пришла без COOP/COEP — проверьте .htaccess'
+        : 'скрипты пришли без COEP — в панели Majordomo («Сайты») отключите обработку NGINX для html, js, wasm',
+    ]);
+  }
   items.push(['Данные воркера без копирования', env.sabVisible ? 'ok' : 'bad', env.sabVisible ? 'видны' : 'нет']);
   items.push(['WebGPU', env.webgpu.startsWith('да') ? 'ok' : 'warn', env.webgpu.startsWith('да') ? env.webgpu.slice(2).trim() || 'есть' : `${env.webgpu}, будет WebGL2`]);
   items.push(['WebGL2', env.webgl2.startsWith('да') ? 'ok' : 'bad', env.webgl2.replace(/^да ?/, '') || 'нет']);

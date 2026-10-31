@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 // SharedArrayBuffer only exists on cross-origin isolated pages. Production hosting sends
-// the same headers from public/_headers (Cloudflare Pages, Netlify) or vercel.json.
+// the same headers from public/.htaccess (Apache on Majordomo).
 const crossOriginIsolation = {
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Embedder-Policy': 'require-corp',

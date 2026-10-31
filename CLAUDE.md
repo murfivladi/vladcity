@@ -36,7 +36,7 @@
 ```
 sim/            Rust (workspace-члены sim/*). Сейчас: spike-agents — проба фазы 1
 client/         TypeScript + Vite + Babylon.js
-client/public/  статика; _headers — заголовки COOP/COEP для Cloudflare Pages / Netlify
+client/public/  статика; .htaccess — заголовки COOP/COEP и типы файлов для хостинга Majordomo (Apache)
 data/           пакеты данных стран (пока пусто)
 docs/           GDD, результаты бенчмарков, решения
 scripts/        сборка WASM, бенчмарки, проверка детерминизма

@@ -51,28 +51,43 @@ jobs:
           path: client/dist
           retention-days: 14
 
-  # Publishes every branch to Cloudflare Pages once the two secrets exist
-  # (see README, "Хостинг"). Without them the job just leaves a notice.
+  # Uploads the site to Majordomo over FTP once the secrets exist (see README, "Хостинг").
+  # main goes to the site root, any other branch to preview/<branch>/ for testing before merge.
+  # Without the secrets the job just leaves a notice.
   deploy:
     needs: build
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      FTP_HOST: ${{ secrets.FTP_HOST }}
+      FTP_USER: ${{ secrets.FTP_USER }}
+      FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+      FTP_DIR: ${{ secrets.FTP_DIR }}
     steps:
-      - name: Skip without Cloudflare secrets
-        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
-        run: echo "::notice::Деплой пропущен - не заданы секреты CLOUDFLARE_API_TOKEN и CLOUDFLARE_ACCOUNT_ID."
+      - name: Skip without FTP secrets
+        if: env.FTP_HOST == '' || env.FTP_USER == '' || env.FTP_PASSWORD == '' || env.FTP_DIR == ''
+        run: echo "::notice::Деплой пропущен - не заданы секреты FTP_HOST, FTP_USER, FTP_PASSWORD, FTP_DIR."
 
       - uses: actions/download-artifact@v4
-        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        if: env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASSWORD != '' && env.FTP_DIR != ''
         with:
           name: site
           path: site
 
-      - name: Deploy to Cloudflare Pages
-        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+      - name: Upload to Majordomo
+        if: env.FTP_HOST != '' && env.FTP_USER != '' && env.FTP_PASSWORD != '' && env.FTP_DIR != ''
         run: |
-          npx --yes wrangler@4 pages project create vladcity --production-branch main || true
-          npx --yes wrangler@4 pages deploy site --project-name vladcity --branch "${GITHUB_REF_NAME}"
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp > /dev/null
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            target="$FTP_DIR"
+          else
+            target="$FTP_DIR/preview/$(printf '%s' "$GITHUB_REF_NAME" | tr -c 'A-Za-z0-9-' '-')"
+          fi
+          # Only assets/ is mirrored with --delete: it holds nothing but hashed build output.
+          lftp -u "$FTP_USER","$FTP_PASSWORD" "$FTP_HOST" -e "
+            set ftp:ssl-allow yes; set net:max-retries 3; set net:timeout 30;
+            mkdir -p -f $target;
+            mirror -R --no-perms --exclude-glob assets/ site $target;
+            mirror -R --no-perms --delete site/assets $target/assets;
+            bye"
+          echo "::notice::Загружено в $target"

@@ -20,6 +20,9 @@ export interface EnvInfo {
   postMessageRttMs: number | null;
   atomicsRttMs: number | null;
   sabVisible: boolean | null;
+  /** Server sent COOP/COEP for the page / for a script file. */
+  headersPage: boolean | null;
+  headersScript: boolean | null;
 }
 
 export interface SimResult {
@@ -121,6 +124,7 @@ export function toMarkdown(r: Results): string {
     out.push('| Параметр | Значение |');
     out.push('|---|---|');
     out.push(`| crossOriginIsolated (COOP/COEP) | ${yes(e.crossOriginIsolated)} |`);
+    out.push(`| Заголовки сервера: страница / скрипты | ${yes(e.headersPage ?? null)} / ${yes(e.headersScript ?? null)} |`);
     out.push(`| SharedArrayBuffer | ${yes(e.sharedArrayBuffer)} |`);
     out.push(`| Данные воркера видны без копирования | ${yes(e.sabVisible)} |`);
     out.push(`| Atomics.waitAsync | ${yes(e.atomicsWaitAsync)} |`);

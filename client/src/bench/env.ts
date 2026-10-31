@@ -43,15 +43,32 @@ function probeWebGL2(): string {
   }
 }
 
+/** A worker that fails to load (e.g. its script arrived without COEP) only fires 'error'. */
+const WORKER_TIMEOUT_MS = 5000;
+
 function nextMessage<T>(worker: Worker, type: string): Promise<T> {
-  return new Promise((resolve) => {
-    const handler = (e: MessageEvent) => {
+  return new Promise((resolve, reject) => {
+    const done = () => {
+      clearTimeout(timer);
+      worker.removeEventListener('message', onMessage);
+      worker.removeEventListener('error', onError);
+    };
+    const onMessage = (e: MessageEvent) => {
       if (e.data?.type === type) {
-        worker.removeEventListener('message', handler);
+        done();
         resolve(e.data as T);
       }
     };
-    worker.addEventListener('message', handler);
+    const onError = () => {
+      done();
+      reject(new Error('воркер не запустился'));
+    };
+    const timer = setTimeout(() => {
+      done();
+      reject(new Error('воркер не отвечает'));
+    }, WORKER_TIMEOUT_MS);
+    worker.addEventListener('message', onMessage);
+    worker.addEventListener('error', onError);
   });
 }
 
@@ -102,6 +119,21 @@ async function measureWorkerLinks(): Promise<Pick<EnvInfo, 'postMessageRttMs' | 
   }
 }
 
+/**
+ * Did the server send the isolation headers for this URL? Checked for the page and for a
+ * script separately: on Majordomo nginx may serve scripts itself, bypassing .htaccess.
+ */
+async function isolationHeaders(url: string, document: boolean): Promise<boolean | null> {
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    const coep = res.headers.get('Cross-Origin-Embedder-Policy') === 'require-corp';
+    const coop = res.headers.get('Cross-Origin-Opener-Policy') === 'same-origin';
+    return document ? coep && coop : coep;
+  } catch {
+    return null;
+  }
+}
+
 export async function probeEnvironment(): Promise<EnvInfo> {
   const nav = navigator as Navigator & NavigatorExtras;
   const perfMemory = (performance as unknown as { memory?: { jsHeapSizeLimit: number } }).memory;
@@ -120,6 +152,8 @@ export async function probeEnvironment(): Promise<EnvInfo> {
     wasmSharedMemory: wasmSharedMemorySupported(),
     webgpu: await probeWebGPU(),
     webgl2: probeWebGL2(),
+    headersPage: await isolationHeaders(location.href, true),
+    headersScript: await isolationHeaders(import.meta.url, false),
     ...links,
   };
 }

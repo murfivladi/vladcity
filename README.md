@@ -19,22 +19,35 @@ Open source, одиночная игра, десктоп и телефоны. П
 
 ## Хостинг
 
-Сайт должен отдавать заголовки `Cross-Origin-Opener-Policy` и `Cross-Origin-Embedder-Policy`,
-иначе не работает общая память (SharedArrayBuffer). Они уже прописаны в `client/public/_headers`
-(понимают Cloudflare Pages и Netlify). GitHub Pages так не умеет.
+Сайт живёт на Majordomo. Ему нужны заголовки `Cross-Origin-Opener-Policy` и
+`Cross-Origin-Embedder-Policy`, иначе браузер выключает общую память (SharedArrayBuffer).
+Они прописаны в `client/public/.htaccess` и попадают в сборку.
 
-CI сам публикует каждую ветку на Cloudflare Pages, когда в репозитории есть два секрета.
-Настройка один раз:
+### Загрузить вручную
 
-1. Зарегистрируйся на [dash.cloudflare.com](https://dash.cloudflare.com) (бесплатно).
-2. Скопируй **Account ID** (на главной странице аккаунта, справа).
-3. Создай токен: *My Profile → API Tokens → Create Token → шаблон «Edit Cloudflare Workers»*
-   (или пустой токен с правом *Account → Cloudflare Pages → Edit*). Скопируй токен.
-4. В GitHub: *Settings → Secrets and variables → Actions → New repository secret*:
-   `CLOUDFLARE_ACCOUNT_ID` и `CLOUDFLARE_API_TOKEN`.
-5. Перезапусти последний запуск CI (*Actions → CI → Re-run all jobs*). Ссылка появится в логе шага
-   «Deploy to Cloudflare Pages»: основная ветка — `https://vladcity.pages.dev`, остальные —
-   `https://<имя-ветки>.vladcity.pages.dev`.
+1. Возьми готовую сборку — содержимое папки `client/dist` (там есть скрытый файл `.htaccess`, его тоже нужно загрузить).
+2. Загрузи всё содержимое в папку сайта на Majordomo (обычно `www` внутри папки домена) —
+   через Web-FTP в панели управления или FileZilla.
+3. Включи SSL-сертификат для домена: без HTTPS общая память не работает.
+4. Открой сайт. В блоке «Окружение» должна стоять галочка у «Общая память (COOP/COEP)».
+   Если там крестик и строка «скрипты пришли без COEP» — nginx отдаёт файлы сам, мимо `.htaccess`:
+   в панели, раздел «Сайты», отключи обработку NGINX для расширений `html`, `js`, `wasm`.
+
+### Автоматически из GitHub
+
+CI сам загружает сайт по FTP после каждого пуша, когда в репозитории заданы секреты
+(*Settings → Secrets and variables → Actions → New repository secret*):
+
+| Секрет | Что это |
+|---|---|
+| `FTP_HOST` | адрес FTP-сервера из панели Majordomo |
+| `FTP_USER` | логин FTP-пользователя |
+| `FTP_PASSWORD` | его пароль |
+| `FTP_DIR` | путь к папке сайта от корня FTP, например `vladcity.ru/www` |
+
+Ветка `main` попадает в корень сайта, остальные ветки — в `preview/<имя-ветки>/`, чтобы
+проверить фазу до слияния. Папка `FTP_DIR` должна принадлежать только VladCity: внутри неё
+CI удаляет устаревшие файлы сборки из `assets/`.
 
 ## Для разработки
 
