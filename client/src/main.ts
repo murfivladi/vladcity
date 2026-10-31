@@ -28,9 +28,14 @@ if (crashed) {
 function renderReport(): void {
   $('#report').textContent = toMarkdown(results);
   for (const id of ['sim', 'render', 'live', 'memory'] as TestId[]) {
-    const done = id === 'memory' ? !!results.memory?.js || !!results.memory?.wasm : !!results[id];
     const el = $(`[data-status="${id}"]`);
-    if (!el.classList.contains('bad')) el.textContent = done ? 'Готово ✓' : '';
+    if (el.classList.contains('bad')) continue;
+    if (id === 'memory' && results.memory?.wasm && !results.memory.js) {
+      el.textContent = 'Вкладка перезагрузилась на первой части — нажмите ещё раз, чтобы выполнить вторую';
+    } else {
+      const done = id === 'memory' ? !!results.memory?.wasm && !!results.memory?.js : !!results[id];
+      el.textContent = done ? 'Готово ✓' : '';
+    }
   }
 }
 
@@ -121,8 +126,12 @@ async function runTest(id: TestId): Promise<void> {
         break;
       }
       case 'memory': {
-        results.memory = {};
-        for (const phase of ['wasm', 'js'] as const) {
+        // After a tab crash only the unfinished phases run, otherwise the crash would repeat.
+        const prev = results.memory ?? {};
+        const pending = (['wasm', 'js'] as const).filter((p) => !prev[p]);
+        const phases = pending.length ? pending : (['wasm', 'js'] as const);
+        results.memory = pending.length ? prev : {};
+        for (const phase of phases) {
           const name = phase === 'wasm' ? 'WebAssembly.Memory' : 'ArrayBuffer';
           showBusy(`${name}: выделяем память…`);
           results.memory[phase] = await runMemoryPhase(phase, (mb) => showBusy(`${name}: ${mb.toLocaleString('ru-RU')} МБ`));

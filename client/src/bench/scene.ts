@@ -16,6 +16,7 @@ import { CreateCylinderVertexData } from '@babylonjs/core/Meshes/Builders/cylind
 import { CreateGround } from '@babylonjs/core/Meshes/Builders/groundBuilder';
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import '@babylonjs/core/Meshes/thinInstanceMesh';
+import { gpuName } from './env.ts';
 
 export type EnginePreference = 'auto' | 'webgpu' | 'webgl2';
 
@@ -44,7 +45,7 @@ export async function createEngine(host: HTMLElement, pref: EnginePreference): P
       const engine = new WebGPUEngine(freshCanvas(host), { antialias: true, adaptToDeviceRatio: false, powerPreference: 'high-performance' });
       await engine.initAsync();
       const info = (engine as unknown as { _adapterInfo?: { vendor?: string; architecture?: string; description?: string } })._adapterInfo;
-      const gpu = [info?.vendor, info?.architecture, info?.description].filter(Boolean).join(' ') || 'неизвестно';
+      const gpu = gpuName(info) || 'неизвестно';
       return { engine, kind: 'WebGPU', gpu };
     } catch (err) {
       if (pref === 'webgpu') throw err;

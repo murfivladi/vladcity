@@ -126,7 +126,10 @@ export async function runRenderBench(
   progress: (text: string) => void,
   shouldStop: () => boolean,
 ): Promise<RenderResult> {
+  // Read while the engine is alive: withEngine disposes it before returning.
+  let resolution = '';
   const { result, handle, note } = await withEngine(host, pref, progress, async (h) => {
+    resolution = `${h.engine.getRenderWidth()}×${h.engine.getRenderHeight()}`;
     const scenarios: RenderScenarioResult[] = [];
     for (const sc of SCENARIOS) {
       if (shouldStop()) break;
@@ -141,7 +144,7 @@ export async function runRenderBench(
   return {
     engine: note ? `${handle.kind} (${note})` : handle.kind,
     gpu: handle.gpu,
-    resolution: `${handle.engine.getRenderWidth()}×${handle.engine.getRenderHeight()}`,
+    resolution,
     scenarios: result,
   };
 }

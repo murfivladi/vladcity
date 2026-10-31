@@ -17,6 +17,11 @@ function wasmSharedMemorySupported(): boolean {
   }
 }
 
+/** "apple apple apple" → "apple": adapters often repeat the vendor in every field. */
+export function gpuName(info?: { vendor?: string; architecture?: string; description?: string }): string {
+  return [...new Set([info?.vendor, info?.architecture, info?.description].filter(Boolean))].join(' ');
+}
+
 async function probeWebGPU(): Promise<string> {
   const gpu = (navigator as NavigatorExtras).gpu;
   if (!gpu) return 'нет API';
@@ -24,7 +29,7 @@ async function probeWebGPU(): Promise<string> {
     const adapter = await gpu.requestAdapter();
     if (!adapter) return 'API есть, адаптера нет';
     const info = adapter.info;
-    const name = [info?.vendor, info?.architecture, info?.description].filter(Boolean).join(' ');
+    const name = gpuName(info);
     return `да${name ? ` (${name})` : ''}`;
   } catch (err) {
     return `ошибка: ${String(err)}`;
